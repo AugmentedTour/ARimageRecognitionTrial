@@ -7,8 +7,10 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,7 +37,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppActivityBuilderMethods{
         ArFragment arFragment;
         boolean shouldAddModel = true;
         @Override
@@ -62,14 +64,40 @@ public class MainActivity extends AppCompatActivity {
 
         @RequiresApi(api = Build.VERSION_CODES.N)
         private void placeXML(ArFragment arFragment, Anchor anchor, int file) {
-//            View view = View.inflate(this, R.layout.hello_instructions, null);
-//            TextView text = new TextView(this);
-//            text.setText("Test Test");
-//            LinearLayout layout = (LinearLayout) findViewById(R.id.testLinearLayout);
-//            layout.addView(text);
+            ViewGroup group = (ViewGroup) View.inflate(this, R.layout.activity_main2, null);
+            LinearLayout topLayout = group.findViewById(R.id.topLayout);
+            LinearLayout bodyLayout = group.findViewById(R.id.bodyLayout);
+
+
+            titleBuilder("R Building", topLayout);
+            hasAllGendersBathroom(topLayout);
+            hasComputers(topLayout);
+
+            String info = "The R building is home to the arts and humanities division." +
+                    " ESL classes can also be found here, and there's a dance studio downstairs." +
+                    " A cafe sells coffee on the first floor."; //will want to alter later
+
+            textViewBuilder(info, bodyLayout);
+            textViewBuilder("Human Resources (HR): Location R130(425) | Fax 564-3173", bodyLayout);
+            phoneBuilder("HR", "564-2274(425)", bodyLayout);
+
+//            ViewGroup group2 = (ViewGroup) View.inflate(this, R.layout.activity_main2, null);
+//            activityButtonBuilder("Arts and Humanities", group.getContext(), group2.getClass(), false, bodyLayout);
 //
+//            LinearLayout topLayout2 = group2.findViewById(R.id.topLayout);
+//            LinearLayout bodyLayout2 = group2.findViewById(R.id.bodyLayout);
+//
+//            subTitleBuilder("Arts and Humanities Departments", topLayout2);
+
+
+
+            //LinearLayout layout = group.findViewById(R.id.testLinearLayout);
+            //TextView text = new TextView(this);
+            //text.setText("Test Test");
+            //layout.addView(text);
+
             ViewRenderable.builder()
-                    .setView(this, file)
+                    .setView(this, group)
                     .setVerticalAlignment(ViewRenderable.VerticalAlignment.BOTTOM)
                     .setHorizontalAlignment(ViewRenderable.HorizontalAlignment.LEFT)
                     .build()
