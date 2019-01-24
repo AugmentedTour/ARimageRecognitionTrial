@@ -8,6 +8,9 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.ar.core.Anchor;
@@ -19,8 +22,11 @@ import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 
@@ -53,6 +59,26 @@ public class MainActivity extends AppCompatActivity {
                             }
                     );
         }
+
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        private void placeXML(ArFragment arFragment, Anchor anchor, int file) {
+//            View view = View.inflate(this, R.layout.hello_instructions, null);
+//            TextView text = new TextView(this);
+//            text.setText("Test Test");
+//            LinearLayout layout = (LinearLayout) findViewById(R.id.testLinearLayout);
+//            layout.addView(text);
+//
+            ViewRenderable.builder()
+                    .setView(this, file)
+                    .setVerticalAlignment(ViewRenderable.VerticalAlignment.BOTTOM)
+                    .setHorizontalAlignment(ViewRenderable.HorizontalAlignment.LEFT)
+                    .build()
+                    .thenAccept(renderable -> addNodeToScene(arFragment, anchor, renderable));
+
+        }
+
+
+
         @RequiresApi(api = Build.VERSION_CODES.N)
         private void onUpdateFrame(FrameTime frameTime) {
             Frame frame = arFragment.getArSceneView().getArFrame();
@@ -60,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             for (AugmentedImage augmentedImage : augmentedImages) {
                 if (augmentedImage.getTrackingState() == TrackingState.TRACKING) {
                     if (augmentedImage.getName().equals("model") && shouldAddModel) {
-                        placeObject(arFragment, augmentedImage.createAnchor(augmentedImage.getCenterPose()), Uri.parse("model.sfb"));
+                        placeXML(arFragment, augmentedImage.createAnchor(augmentedImage.getCenterPose()), R.layout.hello_instructions);
                         shouldAddModel = false;
                     }
                 }
