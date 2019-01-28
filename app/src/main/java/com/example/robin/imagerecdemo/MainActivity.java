@@ -30,6 +30,7 @@ import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.ScaleController;
 import com.google.ar.sceneform.ux.TransformableNode;
 
 import java.io.IOException;
@@ -113,7 +114,9 @@ public class MainActivity extends AppActivityBuilderMethods{
             Collection<AugmentedImage> augmentedImages = frame.getUpdatedTrackables(AugmentedImage.class);
             for (AugmentedImage augmentedImage : augmentedImages) {
                 if (augmentedImage.getTrackingState() == TrackingState.TRACKING) {
-                    if (augmentedImage.getName().equals("model") && shouldAddModel) {
+                    if ((augmentedImage.getName().equals("model") || augmentedImage.getName().equals("map")
+                            || augmentedImage.getName().equals("rBuilding") || augmentedImage.getName().equals("rSign"))
+                            && shouldAddModel) {
                         placeXML(arFragment, augmentedImage.createAnchor(augmentedImage.getCenterPose()), R.layout.hello_instructions);
                         shouldAddModel = false;
                     }
@@ -122,17 +125,34 @@ public class MainActivity extends AppActivityBuilderMethods{
         }
         public boolean setupAugmentedImagesDb(Config config, Session session) {
             AugmentedImageDatabase augmentedImageDatabase;
-            Bitmap bitmap = loadAugmentedImage();
-            if (bitmap == null) {
-                return false;
-            }
             augmentedImageDatabase = new AugmentedImageDatabase(session);
-            augmentedImageDatabase.addImage("model", bitmap);
+            Bitmap bitmap = loadAugmentedImage("posterTrial.jpg");
+            if (bitmap != null) {
+                augmentedImageDatabase.addImage("model", bitmap);
+            }
+            //add evacuation map image
+            bitmap = loadAugmentedImage("evacuationMap.jpg");
+            if (bitmap != null) {
+                augmentedImageDatabase.addImage("map", bitmap);
+            }
+
+            //add r building image
+            bitmap = loadAugmentedImage("rBuildingTrial.jpg");
+            if (bitmap != null) {
+                augmentedImageDatabase.addImage("rBuilding", bitmap);
+            }
+
+            //add r building sign image
+            bitmap = loadAugmentedImage("rSign.jpg");
+            if (bitmap != null) {
+                augmentedImageDatabase.addImage("rSign", bitmap);
+            }
+
             config.setAugmentedImageDatabase(augmentedImageDatabase);
             return true;
         }
-        private Bitmap loadAugmentedImage() {
-            try (InputStream is = getAssets().open("posterTrial.jpg")) {
+        private Bitmap loadAugmentedImage(String fileName) {
+            try (InputStream is = getAssets().open(fileName)) {
                 return BitmapFactory.decodeStream(is);
             } catch (IOException e) {
                 Log.e("ImageLoad", "IO Exception", e);
@@ -142,6 +162,18 @@ public class MainActivity extends AppActivityBuilderMethods{
         private void addNodeToScene(ArFragment arFragment, Anchor anchor, Renderable renderable) {
             AnchorNode anchorNode = new AnchorNode(anchor);
             TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
+
+            //rotate node
+            node.setLocalRotation(Quaternion.axisAngle(new Vector3(1f, 0, 0), 270f));
+
+            //set scale
+            ScaleController scaler = node.getScaleController();
+            scaler.setMinScale(0.2f);
+            scaler.setMaxScale(0.3f);
+
+
+            node.setLocalPosition(new Vector3(-.2f, 0, .2f));
+
             node.setRenderable(renderable);
             node.setParent(anchorNode);
             arFragment.getArSceneView().getScene().addChild(anchorNode);
