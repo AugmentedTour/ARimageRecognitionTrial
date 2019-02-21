@@ -3,11 +3,10 @@ package com.example.robin.imagerecdemo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,13 +32,27 @@ import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.ScaleController;
 import com.google.ar.sceneform.ux.TransformableNode;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class MainActivity extends AppActivityBuilderMethods{
-        ArFragment arFragment;
+    ArFragment arFragment;
+
+    TextView mainInfo;
+    TextView officeHours;
+
+    // Put in the URL this activity will be parsing from
+    private final String THIS_ONES_URL = "https://www.bellevuecollege.edu/artshum/";
+
         boolean shouldAddModel = true;
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +61,7 @@ public class MainActivity extends AppActivityBuilderMethods{
             arFragment = (CustomArFragment) getSupportFragmentManager().findFragmentById(R.id.sceneform_fragment);
             arFragment.getPlaneDiscoveryController().hide();
             arFragment.getArSceneView().getScene().addOnUpdateListener(this::onUpdateFrame);
+
         }
 
         @RequiresApi(api = Build.VERSION_CODES.N)
@@ -68,19 +82,19 @@ public class MainActivity extends AppActivityBuilderMethods{
             ViewGroup group = (ViewGroup) View.inflate(this, R.layout.activity_main2, null);
             LinearLayout topLayout = group.findViewById(R.id.topLayout);
             LinearLayout bodyLayout = group.findViewById(R.id.bodyLayout);
-
+            phoneBuilder("HR", "564-2274(425)", bodyLayout);
 
             titleBuilder("R Building", topLayout);
             hasAllGendersBathroom(topLayout);
             hasComputers(topLayout);
 
-            String info = "The R building is home to the arts and humanities division." +
-                    " ESL classes can also be found here, and there's a dance studio downstairs." +
-                    " A cafe sells coffee on the first floor."; //will want to alter later
+            mainInfo = textViewBuilder("Loading...", bodyLayout);
+            officeHours = textViewBuilder("Loading...", bodyLayout);
 
-            textViewBuilder(info, bodyLayout);
             textViewBuilder("Human Resources (HR): Location R130(425) | Fax 564-3173", bodyLayout);
-            phoneBuilder("HR", "564-2274(425)", bodyLayout);
+
+            // --- Async task ---
+            new ParseWebpageTask().execute(THIS_ONES_URL);
 
 //            ViewGroup group2 = (ViewGroup) View.inflate(this, R.layout.activity_main2, null);
 //            activityButtonBuilder("Arts and Humanities", group.getContext(), group2.getClass(), false, bodyLayout);
@@ -165,6 +179,7 @@ public class MainActivity extends AppActivityBuilderMethods{
 
             //rotate node
             node.setLocalRotation(Quaternion.axisAngle(new Vector3(1f, 0, 0), 270f));
+            //node.setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 90f));
 
             //set scale
             ScaleController scaler = node.getScaleController();
@@ -179,5 +194,37 @@ public class MainActivity extends AppActivityBuilderMethods{
             arFragment.getArSceneView().getScene().addChild(anchorNode);
             node.select();
         }
+
+
+
+    //This is used to parse the webpage. Just due to how different each page's parsing will be,
+    //We'll probably need a custom one of these for every activity.
+    //Following something similar to this here though should cover that.
+    private class ParseWebpageTask extends AsyncTask<String, Void, String[]> {
+        protected String[] doInBackground(String... urls) { //this is set up for one url but technically it could be easily changed to accommodate several
+            try {
+                return grabData(urls[0]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        //Use this to set all of the text things
+        protected void onPostExecute(String[] result) {
+            mainInfo.setText(result[0]);
+            officeHours.setText(result[1]);
+        }
+
+        //Grab all the data in here and put it into a String[]
+        public String[] grabData(String url) throws IOException {
+            Document doc = Jsoup.connect(url).get();
+            Elements para = doc.getElementsByTag("p");
+            Elements hours = doc.getElementsByClass("well");
+            String[] strings = {para.first().text(), hours.first().text()};
+            return strings;
+        }
+
+    }
 
     }
